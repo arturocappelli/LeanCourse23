@@ -22,12 +22,19 @@ You can prove that two sets are equal by applying `subset_antisymm` or using the
 variable {α β : Type*} (x : α) (s t : Set α)
 
 /- We saw last time that we can prove that two sets are equal using `ext`. -/
-example : s ∩ t = t ∩ s := by sorry
+example : s ∩ t = t ∩ s := by {
+  ext x
+  simp only [mem_inter_iff] --this is the choice suggested by simp?
+  rw [and_comm]-- we could have sent the and_comm into the simp only brackets
+}
 
 /- We can also use existing lemmas and `calc`. -/
-example : (s ∪ tᶜ) ∩ t = s ∩ t := by sorry
-
-
+example : (s ∪ tᶜ) ∩ t = s ∩ t := by {
+calc (s ∪ tᶜ) ∩ t
+     = (s ∩ tᶜ) ∪ (t ∩ tᶜ) := by rw?
+      _ (s ∩ tᶜ) ∪ ∅ := by rw?
+      _ s ∪ t := by rw?
+}
 
 
 
@@ -39,9 +46,19 @@ example : (s ∪ tᶜ) ∩ t = s ∩ t := by sorry
 def Evens : Set ℕ := {n : ℕ | Even n}
 def Odds : Set ℕ := {n | ¬ Even n}
 
-example : Evens ∪ Odds = univ := by sorry
+example : Evens ∪ Odds = univ := by {
+  ext n
+  simp [Evens, Odds]
+  by_cases hn : Even n
+  · simp only [hn]
+  · simp [hn]
+}
 
-
+example : Evens ∪ Odds = univ := by {
+ext n
+simp[Evens, Odds]
+exact em (Even n)
+}
 
 
 
@@ -62,9 +79,12 @@ example : (univ : Set α) = {x | True} := by rfl
 example (s : Set α) : 𝒫 s = {t | t ⊆ s} := by rfl -- \powerset
 
 /- What is the type of `𝒫 s`? -/
+#check 𝒫 s
 
-
-example (s t : Set α) : 𝒫 (s ∩ t) = 𝒫 s ∩ 𝒫 t := by sorry
+example (s t : Set α) : 𝒫 (s ∩ t) = 𝒫 s ∩ 𝒫 t := by {
+  ext x
+  simp
+}
 
 
 
@@ -116,7 +136,23 @@ example (f : α → β) (s : Set β) : f ⁻¹' s = { x : α | f x ∈ s } := by
 example (f : α → β) (s : Set α) : f '' s = { y : β | ∃ x ∈ s, f x = y } := by rfl
 
 
-example {s : Set α} {t : Set β} {f : α → β} : f '' s ⊆ t ↔ s ⊆ f ⁻¹' t := by sorry
+example {s : Set α} {t : Set β} {f : α → β} : f '' s ⊆ t ↔ s ⊆ f ⁻¹' t := by {
+  constructor
+  · intro h x hx
+    simp
+    apply h
+    exact mem_image_of_mem f hx
+  · intro h y hy
+    -- rw [mem_image] at hx
+    obtain ⟨x, hx, hxy⟩ := hy
+    -- rw [← hxy]
+    subst y
+    specialize h hx
+    simp at h
+    exact h
+}
+
+
 
 /-
 If you have a hypothesis `h : y = t` or `h : t = y`,
@@ -157,11 +193,30 @@ example : ({1, 3, 5} : Set ℝ) + {0, 10} = {1, 3, 5, 11, 13, 15} := by sorry
 
 /- # Exercises for the break. -/
 
-example {f : β → α} : f '' (f ⁻¹' s) ⊆ s := by sorry
+example {f : β → α} : f '' (f ⁻¹' s) ⊆ s := by {
+  simp
+  rfl
+}
 
-example {f : β → α} (h : Surjective f) : s ⊆ f '' (f ⁻¹' s) := by sorry
+example {f : β → α} (h : Surjective f) : s ⊆ f '' (f ⁻¹' s) := by {
+  intro x hx
+  rw [@mem_image]
+  rw [Surjective] at h
+  specialize h x
+  obtain ⟨y, hy⟩ := h
+  use y
+  rw [hy]
+  constructor
+  · rw [@mem_preimage, hy]; exact hx
+  · rfl
+}
 
-example {f : α → β} (h : Injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) := by sorry
+example {f : α → β} (h : Injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) := by {
+  intro x hx
+  rw [@mem_image]
+  rw [Injective] at h
+  sorry
+}
 
 example {I : Type*} (f : α → β) (A : I → Set α) : (f '' ⋃ i, A i) = ⋃ i, f '' A i := by sorry
 

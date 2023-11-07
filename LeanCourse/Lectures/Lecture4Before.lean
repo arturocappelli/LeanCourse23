@@ -122,11 +122,17 @@ example {α : Type*} [PartialOrder α]
 
 /- Exercises -/
 
-example {p : ℝ → Prop} (h : ∀ x, p x) : ∃ x, p x := by sorry
-
+example {p : ℝ → Prop} (h : ∀ x, p x) : ∃ x, p x := by {
+  use 42
+  exact h 42
+}
 
 example {α : Type*} {p q : α → Prop} (h : ∀ x, p x → q x) :
-    (∃ x, p x) → (∃ x, q x) := by sorry
+    (∃ x, p x) → (∃ x, q x) := by {
+      intro ⟨x, hx⟩
+      use x
+      exact h x hx
+    }
 
 
 example {α : Type*} {p : α → Prop} {r : Prop} :

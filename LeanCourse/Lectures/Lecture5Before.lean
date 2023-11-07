@@ -35,15 +35,32 @@ We can use the same tactics as for implication:
 
 example {p : Prop} (h : p) : ¬ ¬ p := by sorry
 
-example {α : Type*} {p : α → Prop} : ¬ (∃ x, p x) ↔ ∀ x, ¬ p x := by sorry
+example {α : Type*} {p : α → Prop} : ¬ (∃ x, p x) ↔ ∀ x, ¬ p x := by {
+  constructor
+  · intro h x hx
+    apply h
+    exact ⟨x, hx⟩
+  · intro h h2
+    obtain ⟨ x, hx⟩ := h2
+    specialize h x hx
+    exact h
+}
 
 /- We can use `exfalso` to use the fact that everything follows from `False`:
 ex falso quod libet -/
-example {p : Prop} (h : ¬ p) : p → 0 = 1 := by sorry
+example {p : Prop} (h : ¬ p) : p → 0 = 1 := by {
+ intro h2
+ specialize h h2
+ exfalso
+ assumption
+}
 
 /- `contradiction` proves any goal when two hypotheses are contradictory. -/
 
-example {p : Prop} (h : ¬ p) : p → 0 = 1 := by sorry
+example {p : Prop} (h : ¬ p) : p → 0 = 1 := by {
+  intro h2
+  contradiction
+}
 
 
 
@@ -58,14 +75,32 @@ We can use classical reasoning (with the law of the excluded middle) using the f
 * `push_neg` to push negations inside quantifiers and connectives.
 -/
 
-example {p : Prop} (h : ¬ ¬ p) : p := by sorry
+example {p : Prop} (h : ¬ ¬ p) : p := by {
+  by_contra h2
+  exact h h2
+}
 
-example (p q : Prop) (h : ¬ q → ¬ p) : p → q := by sorry
+example (p q : Prop) (h : ¬ q → ¬ p) : p → q := by {
+  intro hp
+  by_contra hnq
+  exact h hnq hp
+}
 
-example (p q r : Prop) (h1 : p → r) (h2 : ¬ p → r) : r := by sorry
+example (p q r : Prop) (h1 : p → r) (h2 : ¬ p → r) : r := by {
+  by_cases hp : p
+  · exact h1 hp
+  · exact h2 hp
+}
 
-example {α : Type*} {p : α → Prop} : ¬ (∃ x, p x) ↔ ∀ x, ¬ p x := by sorry
+example {α : Type*} {p : α → Prop} : ¬ (∃ x, p x) ↔ ∀ x, ¬ p x := by {
+  push_neg
+  rfl
+}
 
+example {p q : Prop} : ¬ (p ∨ q) ↔ ¬ p ∧ ¬ q := by {
+  push_neg
+  rfl
+}
 
 
 /-- The sequence `u` of real numbers converges to `l`.
@@ -74,10 +109,34 @@ def SequentialLimit (u : ℕ → ℝ) (l : ℝ) : Prop :=
   ∀ ε > 0, ∃ N, ∀ n ≥ N, |u n - l| < ε
 
 example (u : ℕ → ℝ) (l : ℝ) :
-    ¬ SequentialLimit u l ↔ ∃ ε > 0, ∀ N, ∃ n ≥ N, |u n - l| ≥ ε := by sorry
+    ¬ SequentialLimit u l ↔ ∃ ε > 0, ∀ N, ∃ n ≥ N, |u n - l| ≥ ε := by {
+      rw [SequentialLimit]
+      push_neg
+      rfl
+    }
 
 lemma sequentialLimit_unique (u : ℕ → ℝ) (l l' : ℝ) :
-    SequentialLimit u l → SequentialLimit u l' → l = l' := by sorry
+    SequentialLimit u l → SequentialLimit u l' → l = l' := by {
+      intro hl hl'
+      by_contra hll'
+      have : |l - l'| > 0
+      · apply abs_pos.2
+        apply sub_ne_zero.2
+        exact hll'
+      rw [SequentialLimit] at hl hl'
+      specialize hl (|l-l'|/2) (by linarith)
+      obtain ⟨N, hN⟩ := hl
+      obtain ⟨N', hN'⟩ := hl' (|l-l'|/2) (by linarith)
+      let N₀ := max N N'
+      specialize hN N₀ (Nat.le_max_left N N')
+      specialize hN' N₀ (Nat.le_max_right N N')
+      have : |l - l'| < |l - l'| :=
+      calc |l - l'|= |l - u N₀ + (u N₀ - l')| := by ring
+       _ ≤ |l - u N₀| + |u N₀ - l'| := by exact abs_add (l - u N₀) (u N₀ - l')
+       _ = |u N₀ - l| + |u N₀ - l'| := by rw [abs_sub_comm]
+       _ < |l - l'| := by linarith
+      linarith
+    }
 
 
 /- ## Exercises -/

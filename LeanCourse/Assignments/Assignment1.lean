@@ -19,13 +19,19 @@ import LeanCourse.Common
 Do the next exercise using only the `rw` tactic with lemmas `add_comm` and `add_assoc`.
 -/
 
-lemma exercise1_1 (a b c d : ℝ) : a + b + c + d = d + (b + a) + c := by sorry
-
+lemma exercise1_1 (a b c d : ℝ) : a + b + c + d = d + (b + a) + c := by {
+ rw [add_comm]
+ rw [← add_assoc]
+ rw [add_comm a b]
+}
 /-
 Also do the proof using `calc`, where on each `calc` line, you use `rw` only once.
 -/
-lemma exercise1_2 (a b c d : ℝ) : a + b + c + d = d + (b + a) + c := by sorry
-
+lemma exercise1_2 (a b c d : ℝ) : a + b + c + d = d + (b + a) + c := by {
+   calc a + b + c + d = d + (a + b + c) := by rw [add_comm]
+    _ = d + (a + b) + c := by rw [← add_assoc]
+    _  = d + (b + a) + c := by rw [add_comm a b]
+}
 /-
 Do the following exercise using the `rw` tactic only.
 
@@ -45,8 +51,16 @@ The following lemmas may be useful.
 `zero_add a      : 0 + a = a`
 -/
 
-lemma exercise1_3 (a b : ℝ) : (a + b) * (a - b) = a^2 - b^2 := by sorry
+lemma exercise1_3 (a b : ℝ) : (a + b) * (a - b) = a^2 - b^2 := by {
+  rw [add_mul]
+  rw [mul_sub]
+  rw [mul_sub]
+  rw [add_sub]
+  rw [mul_comm b a]
+  rw [ ← pow_two a, ← pow_two b]
+  rw [sub_add (a ^ 2) (a * b) (a * b)]
+  rw [sub_self]
+  rw [sub_sub, zero_add]
+}
 
--- Now redo it with `ring`.
-
-lemma exercise1_4 (a b : ℝ) : (a + b) * (a - b) = a^2 - b^2 := by sorry
+lemma exercise1_4 (a b : ℝ) : (a + b) * (a - b) = a^2 - b^2 := by ring
